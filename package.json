@@ -1,0 +1,11 @@
+{
+  "name": "docmd-live-deploy",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "build": "node deploy-script.js"
+  },
+  "dependencies": {
+    "@mgks/docmd": "latest"
+  }
+}
