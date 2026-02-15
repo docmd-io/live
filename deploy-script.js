@@ -1,52 +1,44 @@
 // deploy-script.js
 
+const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
 async function deploy() {
-    console.log('🔍 Locating docmd engine...');
+    console.log('🚀 Starting deployment build for live.docmd.io...');
+
+    // 1. Clean previous build
+    const distDir = path.join(__dirname, 'dist');
+    if (fs.existsSync(distDir)) {
+        console.log('🧹 Cleaning previous dist...');
+        fs.rmSync(distDir, { recursive: true, force: true });
+    }
 
     try {
-        const mainEntryPath = require.resolve('@mgks/docmd');
-        const srcDir = path.dirname(mainEntryPath);
-        const internalBuilderPath = path.join(srcDir, 'commands', 'live.js');
+        // 2. Run docmd live --build-only
+        // We use npx to ensure we use the locally installed version from package.json
+        console.log('🔨 Building Live Editor bundle...');
+        execSync('npx docmd live --build-only', { 
+            stdio: 'inherit',
+            cwd: __dirname 
+        });
 
-        const docmdRoot = path.resolve(srcDir, '..');
-
-        if (!fs.existsSync(internalBuilderPath)) {
-            throw new Error(`Could not find builder at ${internalBuilderPath}`);
-        }
-
-        console.log('🚀 Triggering internal build...');
-
-        const { build } = require(internalBuilderPath);
-
-        await build();
-
-        const sourceDist = path.join(docmdRoot, 'dist');
-        const targetDist = path.join(__dirname, 'dist');
-
-        console.log(`📦 Moving artifacts from ${sourceDist} to ${targetDist}...`);
-        
-        if (fs.existsSync(targetDist)) {
-            fs.rmSync(targetDist, { recursive: true, force: true });
-        }
-        
-        fs.cpSync(sourceDist, targetDist, { recursive: true });
-        
+        // 3. Copy CNAME
+        // GitHub Pages requires the CNAME file to be inside the uploaded folder
         if (fs.existsSync(path.join(__dirname, 'CNAME'))) {
-            fs.copyFileSync(path.join(__dirname, 'CNAME'), path.join(targetDist, 'CNAME'));
+            console.log('📄 Copying CNAME...');
+            fs.copyFileSync(
+                path.join(__dirname, 'CNAME'), 
+                path.join(distDir, 'CNAME')
+            );
         }
-        
-        console.log('✅ Ready for deployment.');
+
+        console.log('✅ Build complete. /dist is ready for deployment.');
 
     } catch (e) {
-        console.error('❌ Error locating or running docmd:', e);
+        console.error('❌ Build failed:', e.message);
         process.exit(1);
     }
 }
 
-deploy().catch(err => {
-    console.error('❌ Deployment script failed:', err);
-    process.exit(1);
-});
+deploy();
