@@ -6,6 +6,6 @@
     "build": "node deploy-script.js"
   },
   "dependencies": {
-    "@mgks/docmd": "latest"
+    "@docmd/core": "latest"
   }
 }
