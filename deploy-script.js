@@ -23,6 +23,17 @@ async function deploy() {
             cwd: __dirname 
         });
 
+        // 2.5 Relocate files
+        // Since @docmd/live writes to its own public folder, we need to copy it to dist
+        const buildOutput = path.join(__dirname, 'node_modules', '@docmd/live', 'public');
+        if (fs.existsSync(buildOutput)) {
+            console.log('📂 Moving built files to dist...');
+            fs.cpSync(buildOutput, distDir, { recursive: true });
+        } else {
+            console.error('❌ Build output not found in node_modules!');
+            process.exit(1);
+        }
+
         // 3. Copy CNAME
         // GitHub Pages requires the CNAME file to be inside the uploaded folder
         if (fs.existsSync(path.join(__dirname, 'CNAME'))) {
