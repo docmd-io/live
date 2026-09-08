@@ -34,6 +34,14 @@ async function deploy() {
             process.exit(1);
         }
 
+        // 2.6 Patch KaTeX math preset (restores $$ for display math block equations)
+        const distIndexHtml = path.join(distDir, 'index.html');
+        if (fs.existsSync(distIndexHtml)) {
+            let html = fs.readFileSync(distIndexHtml, 'utf8');
+            html = html.replace(/\\n\$\\n/g, () => '\\n$$\\n');
+            fs.writeFileSync(distIndexHtml, html, 'utf8');
+        }
+
         // 3. Copy CNAME
         // GitHub Pages requires the CNAME file to be inside the uploaded folder
         if (fs.existsSync(path.join(__dirname, 'CNAME'))) {
